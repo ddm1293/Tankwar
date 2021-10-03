@@ -38,21 +38,6 @@ public class Wall {
         return bricks;
     }
 
-    /*public boolean hitWall(int x, int y) {
-        if (this.horizontal) {
-            if ((x >= this.x && x <= this.x + this.bricks * brickWidth)
-                    && (y >= this.y && y <= this.y + brickHeight)) {
-                return true;
-            }
-        } else {
-            if ((x >= this.x && x <= this.x + brickWidth)
-                    && (y >= this.y && y <= this.y + this.bricks * brickHeight)) {
-                return true;
-            }
-        }
-        return false;
-    }*/
-
     public Rectangle getRectangle() {
         return horizontal
                 ? new Rectangle(x, y, brickWidth * bricks, brickHeight)

@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.List;
 import java.util.Random;
 
 public class Tank {
@@ -15,6 +14,7 @@ public class Tank {
     private int y;
     private Direction direction;
     private boolean enemy;
+    private static final int MOVE_SPEED = 5;
 
     public Tank(int x, int y, Direction direction) {
         this.x = x;
@@ -56,53 +56,13 @@ public class Tank {
 
     Image getImage() {
         String prefix = enemy ? "e" : "";
-        switch (this.direction) {
-            case UP: return new ImageIcon("assets/images/" + prefix + "tankU.gif").getImage();
-            case DOWN: return new ImageIcon("assets/images/" + prefix + "tankD.gif").getImage();
-            case LEFT: return new ImageIcon("assets/images/" + prefix + "tankL.gif").getImage();
-            case RIGHT: return new ImageIcon("assets/images/" + prefix + "tankR.gif").getImage();
-
-            case UPLEFT: return new ImageIcon("assets/images/" + prefix + "tankLU.gif").getImage();
-            case UPRIGHT: return new ImageIcon("assets/images/" + prefix + "tankRU.gif").getImage();
-            case DOWNLEFT: return new ImageIcon("assets/images/" + prefix + "tankLD.gif").getImage();
-            case DOWNRIGHT: return new ImageIcon("assets/images/" + prefix + "tankRD.gif").getImage();
-        }
-        return null;
+        return direction.getImage(prefix + "tank");
     }
 
     public void move() {
         if (this.stopped) return;
-        switch (this.direction) {
-            case UP:
-                y -= 5;
-                break;
-            case DOWN:
-                y += 5;
-                break;
-            case LEFT:
-                x -= 5;
-                break;
-            case RIGHT:
-                x += 5;
-                break;
-
-            case UPLEFT:
-                y -= 5;
-                x -= 5;
-                break;
-            case UPRIGHT:
-                y -= 5;
-                x += 5;
-                break;
-            case DOWNLEFT:
-                y += 5;
-                x -= 5;
-                break;
-            case DOWNRIGHT:
-                y += 5;
-                x += 5;
-                break;
-        }
+        this.x += direction.x * MOVE_SPEED;
+        this.y += direction.y * MOVE_SPEED;
         this.stayInFrame();
     }
 
@@ -143,10 +103,10 @@ public class Tank {
     private void determineDirection() {
         if (!up && !left && !down && !right) this.stopped = true;
         else {
-            if (up && left && !down && !right) this.direction = Direction.UPLEFT;
-            else if (up && !left && !down && right) this.direction = Direction.UPRIGHT;
-            else if (!up && left && down && !right) this.direction = Direction.DOWNLEFT;
-            else if (!up && !left && down && right) this.direction = Direction.DOWNRIGHT;
+            if (up && left && !down && !right) this.direction = Direction.LEFT_UP;
+            else if (up && !left && !down && right) this.direction = Direction.RIGHT_UP;
+            else if (!up && left && down && !right) this.direction = Direction.LEFT_DOWN;
+            else if (!up && !left && down && right) this.direction = Direction.RIGHT_DOWN;
 
             else if (up && !left && !down && !right) this.direction = Direction.UP;
             else if (!up && !left && down && !right) this.direction = Direction.DOWN;
@@ -181,6 +141,13 @@ public class Tank {
         //this.move();
     }
 
+    // make a sound based on the given string source of the sound
+    private void fireSound(String audioFile) {
+        Media sound = new Media(new File(audioFile).toURI().toString());
+        MediaPlayer mediaPlayer = new MediaPlayer(sound);
+        mediaPlayer.play();
+    }
+
     private void superFire() {
         for (Direction direction: Direction.values()) {
             Missile missile = new Missile(this.x + this.getImage().getWidth(null) / 2 - 6,
@@ -192,9 +159,7 @@ public class Tank {
         String audioFile = new Random().nextBoolean()?
                 "assets/audios/supershoot.aiff" :
                 "assets/audios/supershoot.wav";
-        Media sound = new Media(new File(audioFile).toURI().toString());
-        MediaPlayer mediaPlayer = new MediaPlayer(sound);
-        mediaPlayer.play();
+        fireSound(audioFile);
     }
 
     private void fire() {
@@ -203,9 +168,7 @@ public class Tank {
         GameClient.getInstance().getMissiles().add(missile);
 
         // make a sound
-        Media sound = new Media(new File("assets/audios/shoot.wav").toURI().toString());
-        MediaPlayer mediaPlayer = new MediaPlayer(sound);
-        mediaPlayer.play();
+        fireSound("assets/audios/shoot.wav");
     }
 
     public void keyReleased(KeyEvent e) {

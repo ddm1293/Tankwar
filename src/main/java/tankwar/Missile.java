@@ -7,7 +7,7 @@ public class Missile {
     private int x, y;
     private final Direction direction;
     private final boolean enemy;
-    private int SPEED = 10;
+    private static final int SPEED = 10;
     private boolean stopped;
 
     public Missile(int x, int y, Direction direction, boolean enemy) {
@@ -18,53 +18,13 @@ public class Missile {
     }
 
     private Image getImage() {
-        switch (this.direction) {
-            case UP: return new ImageIcon("assets/images/missileU.gif").getImage();
-            case DOWN: return new ImageIcon("assets/images/missileD.gif").getImage();
-            case LEFT: return new ImageIcon("assets/images/missileL.gif").getImage();
-            case RIGHT: return new ImageIcon("assets/images/missileR.gif").getImage();
-
-            case UPLEFT: return new ImageIcon("assets/images/missileLU.gif").getImage();
-            case UPRIGHT: return new ImageIcon("assets/images/missileRU.gif").getImage();
-            case DOWNLEFT: return new ImageIcon("assets/images/missileLD.gif").getImage();
-            case DOWNRIGHT: return new ImageIcon("assets/images/missileRD.gif").getImage();
-        }
-        return null;
+        return direction.getImage("missile");
     }
 
     private void move() {
         if (this.stopped) return;
-        switch (this.direction) {
-            case UP:
-                this.y -= SPEED;
-                break;
-            case DOWN:
-                this.y += SPEED;
-                break;
-            case LEFT:
-                x -= SPEED;
-                break;
-            case RIGHT:
-                x += SPEED;
-                break;
-
-            case UPLEFT:
-                this.y -= SPEED;
-                x -= SPEED;
-                break;
-            case UPRIGHT:
-                this.y -= SPEED;
-                x += SPEED;
-                break;
-            case DOWNLEFT:
-                this.y += SPEED;
-                x -= SPEED;
-                break;
-            case DOWNRIGHT:
-                this.y += SPEED;
-                x += SPEED;
-                break;
-        }
+        this.x += direction.x * SPEED;
+        this.y += direction.y * SPEED;
     }
 
     private boolean outOfFrame() {
