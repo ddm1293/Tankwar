@@ -3,16 +3,26 @@ package tankwar;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 public class Tank {
     private int x;
     private int y;
     private Direction direction;
+    private boolean enemy;
 
     public Tank(int x, int y, Direction direction) {
         this.x = x;
         this.y = y;
         this.direction = direction;
+        this.enemy = false;
+    }
+
+    public Tank(int x, int y, Direction direction, boolean enemy) {
+        this.x = x;
+        this.y = y;
+        this.direction = direction;
+        this.enemy = enemy;
     }
 
     public int getX() {
@@ -40,16 +50,17 @@ public class Tank {
     }
 
     Image getImage() {
+        String prefix = enemy ? "e" : "";
         switch (this.direction) {
-            case UP: return new ImageIcon("assets/images/tankU.gif").getImage();
-            case DOWN: return new ImageIcon("assets/images/tankD.gif").getImage();
-            case LEFT: return new ImageIcon("assets/images/tankL.gif").getImage();
-            case RIGHT: return new ImageIcon("assets/images/tankR.gif").getImage();
+            case UP: return new ImageIcon("assets/images/" + prefix + "tankU.gif").getImage();
+            case DOWN: return new ImageIcon("assets/images/" + prefix + "tankD.gif").getImage();
+            case LEFT: return new ImageIcon("assets/images/" + prefix + "tankL.gif").getImage();
+            case RIGHT: return new ImageIcon("assets/images/" + prefix + "tankR.gif").getImage();
 
-            case UPLEFT: return new ImageIcon("assets/images/tankLU.gif").getImage();
-            case UPRIGHT: return new ImageIcon("assets/images/tankRU.gif").getImage();
-            case DOWNLEFT: return new ImageIcon("assets/images/tankLD.gif").getImage();
-            case DOWNRIGHT: return new ImageIcon("assets/images/tankRD.gif").getImage();
+            case UPLEFT: return new ImageIcon("assets/images/" + prefix + "tankLU.gif").getImage();
+            case UPRIGHT: return new ImageIcon("assets/images/" + prefix + "tankRU.gif").getImage();
+            case DOWNLEFT: return new ImageIcon("assets/images/" + prefix + "tankLD.gif").getImage();
+            case DOWNRIGHT: return new ImageIcon("assets/images/" + prefix + "tankRD.gif").getImage();
         }
         return null;
     }
@@ -87,6 +98,39 @@ public class Tank {
                 x += 5;
                 break;
         }
+        this.stayInFrame();
+    }
+
+    private void stayInFrame() {
+        if (x < 0) x = 0;
+        else if (x + this.getImage().getWidth(null) > 800) x = 800 - this.getImage().getWidth(null);
+        if (y < 0) y = 0;
+        else if (y + this.getImage().getHeight(null)> 600) y = 600 - this.getImage().getHeight(null);
+    }
+
+    private boolean hitWall() {
+        Rectangle rectangleTank = this.getRectangle();
+        for (Wall wall: GameClient.getInstance().getWalls()) {
+            if (rectangleTank.intersects(wall.getRectangle())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hitEnemy() {
+        Rectangle rectangleTank = this.getRectangle();
+        for (Tank enemyTank: GameClient.getInstance().getEnemyTanks()) {
+            if (rectangleTank.intersects(enemyTank.getRectangle())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Rectangle getRectangle() {
+        return new Rectangle(x, y, this.getImage().getWidth(null),
+                this.getImage().getHeight(null));
     }
 
     private boolean up, down, left, right, stopped;
@@ -146,8 +190,20 @@ public class Tank {
     }
 
     void draw(Graphics g) {
+        int oldX = x, oldY = y;
         this.determineDirection();
         this.move();
+
+        if (this.hitWall()) {
+            setX(oldX);
+            setY(oldY);
+        }
+
+        if (this.hitEnemy()) {
+            setX(oldX);
+            setY(oldY);
+        }
+
         g.drawImage(this.getImage(), this.x, this.y, null);
     }
 }
