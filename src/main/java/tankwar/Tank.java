@@ -1,9 +1,14 @@
 package tankwar;
 
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.List;
+import java.util.Random;
 
 public class Tank {
     private int x;
@@ -166,9 +171,41 @@ public class Tank {
             case KeyEvent.VK_RIGHT:
                 right = true;
                 break;
+            case KeyEvent.VK_CONTROL:
+                this.fire();
+                break;
+            case KeyEvent.VK_Z:
+                this.superFire();
         }
         //this.determineDirection();
         //this.move();
+    }
+
+    private void superFire() {
+        for (Direction direction: Direction.values()) {
+            Missile missile = new Missile(this.x + this.getImage().getWidth(null) / 2 - 6,
+                    this.y + this.getImage().getHeight(null) / 2 - 6, direction, enemy);
+            GameClient.getInstance().getMissiles().add(missile);
+        }
+
+        // make a random super fire sound
+        String audioFile = new Random().nextBoolean()?
+                "assets/audios/supershoot.aiff" :
+                "assets/audios/supershoot.wav";
+        Media sound = new Media(new File(audioFile).toURI().toString());
+        MediaPlayer mediaPlayer = new MediaPlayer(sound);
+        mediaPlayer.play();
+    }
+
+    private void fire() {
+        Missile missile = new Missile(this.x + this.getImage().getWidth(null) / 2 - 6,
+                this.y + this.getImage().getHeight(null) / 2 - 6, this.direction, enemy);
+        GameClient.getInstance().getMissiles().add(missile);
+
+        // make a sound
+        Media sound = new Media(new File("assets/audios/shoot.wav").toURI().toString());
+        MediaPlayer mediaPlayer = new MediaPlayer(sound);
+        mediaPlayer.play();
     }
 
     public void keyReleased(KeyEvent e) {
