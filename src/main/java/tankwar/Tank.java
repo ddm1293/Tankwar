@@ -3,7 +3,6 @@ package tankwar;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -15,12 +14,19 @@ public class Tank {
     private Direction direction;
     private boolean enemy;
     private static final int MOVE_SPEED = 5;
+    private int HP;
+    private boolean alive;
+
+    private static final int MY_HP = 100;
+    private static final int ENEMY_HP = 50;
 
     public Tank(int x, int y, Direction direction) {
         this.x = x;
         this.y = y;
         this.direction = direction;
         this.enemy = false;
+        this.alive = true;
+        this.HP = MY_HP;
     }
 
     public Tank(int x, int y, Direction direction, boolean enemy) {
@@ -28,6 +34,8 @@ public class Tank {
         this.y = y;
         this.direction = direction;
         this.enemy = enemy;
+        this.alive = true;
+        this.HP = enemy? ENEMY_HP : MY_HP;
     }
 
     public int getX() {
@@ -38,8 +46,35 @@ public class Tank {
         return y;
     }
 
+    public boolean isEnemy() {
+        return enemy;
+    }
+
     public Direction getDirection() {
         return direction;
+    }
+
+    public boolean isAlive() {
+        return alive;
+    }
+
+    public int getHP() {
+        return HP;
+    }
+
+    public void setHP(int HP) {
+        this.HP = HP;
+    }
+
+    public void getHitByMissile() {
+        if (this.alive) {
+            this.HP -= Missile.ATTACK;
+        }
+        if (this.HP <= 0) this.setAlive(false);
+    }
+
+    public void setAlive(boolean alive) {
+        this.alive = alive;
     }
 
     public void setX(int x) {
@@ -63,7 +98,6 @@ public class Tank {
         if (this.stopped) return;
         this.x += direction.x * MOVE_SPEED;
         this.y += direction.y * MOVE_SPEED;
-        this.stayInFrame();
     }
 
     private void stayInFrame() {
@@ -152,7 +186,7 @@ public class Tank {
         for (Direction direction: Direction.values()) {
             Missile missile = new Missile(this.x + this.getImage().getWidth(null) / 2 - 6,
                     this.y + this.getImage().getHeight(null) / 2 - 6, direction, enemy);
-            GameClient.getInstance().getMissiles().add(missile);
+            GameClient.getInstance().addMissile(missile);
         }
 
         // make a random super fire sound
@@ -190,9 +224,12 @@ public class Tank {
     }
 
     void draw(Graphics g) {
+
         int oldX = x, oldY = y;
         this.determineDirection();
         this.move();
+
+        this.stayInFrame();
 
         if (this.hitWall()) {
             setX(oldX);

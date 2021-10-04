@@ -1,6 +1,5 @@
 package tankwar;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class Missile {
@@ -8,7 +7,8 @@ public class Missile {
     private final Direction direction;
     private final boolean enemy;
     private static final int SPEED = 10;
-    private boolean stopped;
+    private boolean dead;
+    public static final int ATTACK = 25;
 
     public Missile(int x, int y, Direction direction, boolean enemy) {
         this.x = x;
@@ -17,12 +17,20 @@ public class Missile {
         this.enemy = enemy;
     }
 
+    public boolean isDead() {
+        return dead;
+    }
+
+    public void setDead(boolean dead) {
+        this.dead = dead;
+    }
+
     private Image getImage() {
         return direction.getImage("missile");
     }
 
     private void move() {
-        if (this.stopped) return;
+        if (this.dead) return;
         this.x += direction.x * SPEED;
         this.y += direction.y * SPEED;
     }
@@ -41,11 +49,26 @@ public class Missile {
         return false;
     }
 
-    private boolean hitEnemy() {
+    private boolean hitTank() {
         Rectangle recMissile = this.getRectangle();
-        for (Tank enemyTank: GameClient.getInstance().getEnemyTanks()) {
-            if (recMissile.intersects(enemyTank.getRectangle())) {
+        
+        if (this.enemy) {
+            Tank playerTank = GameClient.getInstance().getPlayerTank();
+            if (recMissile.intersects(playerTank.getRectangle())) {
+                playerTank.getHitByMissile();
+                /*
+                playerTank.setHP(playerTank.getHP() - 10); //初步版本
+                if (playerTank.getHP() <= 0) {
+                    playerTank.setAlive(false);
+                }*/
                 return true;
+            }
+        } else {
+            for (Tank enemyTank: GameClient.getInstance().getEnemyTanks()) {
+                if (recMissile.intersects(enemyTank.getRectangle())) {
+                    enemyTank.getHitByMissile();
+                    return true;
+                }
             }
         }
         return false;
@@ -58,13 +81,16 @@ public class Missile {
 
     public void draw(Graphics g) {
         this.move();
-        if (outOfFrame()) return;
-        if (hitWall()) {
-            this.stopped = true;
+        if (outOfFrame()) {
+            this.setDead(true);
             return;
         }
-        if (hitEnemy()) {
-            this.stopped = true;
+        if (hitWall()) {
+            this.setDead(true);
+            return;
+        }
+        if (hitTank()) {
+            this.setDead(true);
             return;
         }
         g.drawImage(this.getImage(), this.x, this.y, null);
