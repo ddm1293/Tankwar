@@ -20,6 +20,7 @@ public class GameClient extends JComponent {
     private List<Tank> enemyTanks;
     private List<Wall> walls;
     private List<Missile> missiles;
+    private List<Explosion> explosions;
 
     public Tank getPlayerTank() {
         return playerTank;
@@ -37,8 +38,16 @@ public class GameClient extends JComponent {
         return missiles;
     }
 
+    public List<Explosion> getExplosions() {
+        return explosions;
+    }
+
     public void addMissile(Missile missile) {
         missiles.add(missile);
+    }
+
+    public void addExplosion(Explosion explosion) {
+        explosions.add(explosion);
     }
 
     private GameClient() {
@@ -54,6 +63,8 @@ public class GameClient extends JComponent {
         );
 
         this.missiles = new ArrayList<>();
+
+        this.explosions = new ArrayList<>();
 
         this.setPreferredSize(new Dimension(800, 600));
     }
@@ -86,9 +97,14 @@ public class GameClient extends JComponent {
             wall.draw(g);
         }
 
-        missiles.removeIf(missile -> missile.isDead());
+        missiles.removeIf(missile -> !missile.isAlive());
         for (Missile missile: missiles) {
             missile.draw(g);
+        }
+
+        explosions.removeIf(explosion -> !explosion.isAlive());
+        for (Explosion explosion: explosions) {
+            explosion.draw(g);
         }
     }
 

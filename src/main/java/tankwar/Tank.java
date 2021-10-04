@@ -175,13 +175,6 @@ public class Tank {
         //this.move();
     }
 
-    // make a sound based on the given string source of the sound
-    private void fireSound(String audioFile) {
-        Media sound = new Media(new File(audioFile).toURI().toString());
-        MediaPlayer mediaPlayer = new MediaPlayer(sound);
-        mediaPlayer.play();
-    }
-
     private void superFire() {
         for (Direction direction: Direction.values()) {
             Missile missile = new Missile(this.x + this.getImage().getWidth(null) / 2 - 6,
@@ -193,7 +186,7 @@ public class Tank {
         String audioFile = new Random().nextBoolean()?
                 "assets/audios/supershoot.aiff" :
                 "assets/audios/supershoot.wav";
-        fireSound(audioFile);
+        Tools.playSound(audioFile);
     }
 
     private void fire() {
@@ -202,7 +195,7 @@ public class Tank {
         GameClient.getInstance().getMissiles().add(missile);
 
         // make a sound
-        fireSound("assets/audios/shoot.wav");
+        Tools.playSound("assets/audios/shoot.wav");
     }
 
     public void keyReleased(KeyEvent e) {
@@ -223,7 +216,7 @@ public class Tank {
         //this.determineDirection();
     }
 
-    void draw(Graphics g) {
+    public void draw(Graphics g) {
 
         int oldX = x, oldY = y;
         this.determineDirection();
