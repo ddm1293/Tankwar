@@ -120,7 +120,7 @@ public class Tank {
     private boolean hitEnemy() {
         Rectangle rectangleTank = this.getRectangle();
         for (Tank enemyTank: GameClient.getInstance().getEnemyTanks()) {
-            if (rectangleTank.intersects(enemyTank.getRectangle())) {
+            if (enemyTank != this && rectangleTank.intersects(enemyTank.getRectangle())) {
                 return true;
             }
         }
@@ -170,6 +170,10 @@ public class Tank {
                 break;
             case KeyEvent.VK_Z:
                 this.superFire();
+                break;
+            case KeyEvent.VK_A:
+                GameClient.getInstance().restart();
+                break;
         }
         //this.determineDirection();
         //this.move();
@@ -219,7 +223,7 @@ public class Tank {
     public void draw(Graphics g) {
 
         int oldX = x, oldY = y;
-        this.determineDirection();
+        if (!this.enemy) this.determineDirection();
         this.move();
 
         this.stayInFrame();
@@ -234,6 +238,39 @@ public class Tank {
             setY(oldY);
         }
 
+        // Enemies hit into playerTank
+        if (this.enemy &&
+                this.getRectangle().intersects(GameClient.getInstance().getPlayerTank().getRectangle())) {
+            setX(oldX);
+            setY(oldY);
+        }
+
+        this.drawHPBar(g);
+
         g.drawImage(this.getImage(), this.x, this.y, null);
+    }
+
+    private final Random random = new Random();
+    private int step = random.nextInt(12) + 3;
+
+    public void actRandomly() {
+        Direction[] directions = Direction.values();
+        if (step == 0) {
+            step = random.nextInt(12) + 3;
+            this.direction = directions[random.nextInt(directions.length)];
+            if (random.nextBoolean()) {
+                this.fire();
+            }
+        }
+        step--;
+    }
+
+    private void drawHPBar(Graphics g) {
+        g.setColor(Color.WHITE);
+        g.fillRect(this.x, this.y - 10, this.getImage().getWidth(null), 10);
+        g.setColor(Color.RED);
+        int oldHP = enemy? ENEMY_HP : MY_HP;
+        int HPLeft = HP * this.getImage().getWidth(null) / oldHP;
+        g.fillRect(this.x, this.y - 10, HPLeft, 10);
     }
 }
