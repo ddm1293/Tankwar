@@ -153,10 +153,19 @@ public class Tank {
                 this.getImage().getHeight(null));
     }
 
-    private boolean up, down, left, right, stopped;
+    private boolean stopped;
+    private int directionInt;
 
     private void determineDirection() {
-        if (!up && !left && !down && !right) this.stopped = true;
+        Direction newDirection = Direction.parseDirectionInt(this.directionInt);
+        if (newDirection == null) {
+            this.stopped = true;
+        } else {
+            this.direction = newDirection;
+            this.stopped = false;
+        }
+
+        /*if (!up && !left && !down && !right) this.stopped = true;
         else {
             if (up && left && !down && !right) this.direction = Direction.LEFT_UP;
             else if (up && !left && !down && right) this.direction = Direction.RIGHT_UP;
@@ -169,22 +178,22 @@ public class Tank {
             else if (!up && !left && !down && right) this.direction = Direction.RIGHT;
 
             this.stopped = false;
-        }
+        }*/
     }
 
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_UP:
-                up = true;
+                this.directionInt |= Direction.UP.directionInt;
                 break;
             case KeyEvent.VK_DOWN:
-                down = true;
+                this.directionInt |= Direction.DOWN.directionInt;
                 break;
             case KeyEvent.VK_LEFT:
-                left = true;
+                this.directionInt |= Direction.LEFT.directionInt;
                 break;
             case KeyEvent.VK_RIGHT:
-                right = true;
+                this.directionInt |= Direction.RIGHT.directionInt;
                 break;
             case KeyEvent.VK_CONTROL:
                 this.fire();
@@ -226,16 +235,16 @@ public class Tank {
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_UP:
-                up = false;
+                this.directionInt ^= Direction.UP.directionInt;
                 break;
             case KeyEvent.VK_DOWN:
-                down = false;
+                this.directionInt ^= Direction.DOWN.directionInt;
                 break;
             case KeyEvent.VK_LEFT:
-                left = false;
+                this.directionInt ^= Direction.LEFT.directionInt;
                 break;
             case KeyEvent.VK_RIGHT:
-                right = false;
+                this.directionInt ^= Direction.RIGHT.directionInt;
                 break;
         }
         //this.determineDirection();

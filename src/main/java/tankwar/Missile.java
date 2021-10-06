@@ -37,7 +37,10 @@ public class Missile {
     }
 
     private boolean outOfFrame() {
-        return (this.x < 0 || this.x > 800 || this.y < 0 || this.y > 600) ? true : false;
+        return (this.x < 0 ||
+                this.x > GameClient.WIDTH ||
+                this.y < 0 ||
+                this.y > GameClient.HEIGHT) ? true : false;
     }
 
     private boolean hitWall() {
