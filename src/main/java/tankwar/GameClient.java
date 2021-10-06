@@ -1,18 +1,29 @@
 package tankwar;
 
+import com.alibaba.fastjson.JSON;
+import org.apache.commons.io.FileUtils;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class GameClient extends JComponent {
 
     private static final GameClient INSTANCE = new GameClient();
+    public static final String GAME_SAVE = "game.save";
+    public static final int WIDTH = 800, HEIGHT = 600;
 
     public static GameClient getInstance() {
         return INSTANCE;
@@ -24,6 +35,7 @@ public class GameClient extends JComponent {
     private List<Wall> walls;
     private List<Missile> missiles;
     private List<Explosion> explosions;
+    private FirstAid firstAid;
 
     public Tank getPlayerTank() {
         return playerTank;
@@ -43,6 +55,10 @@ public class GameClient extends JComponent {
 
     public List<Explosion> getExplosions() {
         return explosions;
+    }
+
+    public FirstAid getFirstAid() {
+        return firstAid;
     }
 
     synchronized void addMissile(Missile missile) {
@@ -69,7 +85,9 @@ public class GameClient extends JComponent {
 
         this.explosions = new ArrayList<>();
 
-        this.setPreferredSize(new Dimension(800, 600));
+        this.firstAid = new FirstAid(400, 250); // 待定
+
+        this.setPreferredSize(new Dimension(WIDTH, HEIGHT));
     }
 
     private void intiEnemyTanks() {
@@ -84,7 +102,7 @@ public class GameClient extends JComponent {
     @Override
     protected void paintComponent(Graphics g) {
         g.setColor(Color.BLACK);
-        g.fillRect(0, 0, 800, 600);
+        g.fillRect(0, 0, WIDTH, HEIGHT);
         super.paintComponent(g);
 
         if (!playerTank.isAlive()) {
@@ -102,6 +120,9 @@ public class GameClient extends JComponent {
             g.drawString("Enemies Left: " + enemyTanks.size(), 10, 90);
             g.drawString("Enemies Killed: " + enemyKilled.get(), 10 ,110);
 
+            g.drawImage(Tools.getImage("tree.png"), 720, 10, null);
+            g.drawImage(Tools.getImage("tree.png"), 10, 520, null);
+
             this.playerTank.draw(g);
 
             int enemySize = enemyTanks.size();
@@ -110,8 +131,8 @@ public class GameClient extends JComponent {
             if (enemyTanks.isEmpty()) {
                 this.intiEnemyTanks();
             }
-            for (Tank tank : enemyTanks) {
-                tank.draw(g);
+            for (Tank enemyTank : enemyTanks) {
+                enemyTank.draw(g);
             }
 
             for (Wall wall: walls) {
@@ -127,6 +148,13 @@ public class GameClient extends JComponent {
             for (Explosion explosion: explosions) {
                 explosion.draw(g);
             }
+
+            if (playerTank.isDying() && new Random().nextInt(3) == 2) {
+                firstAid.setAlive(true);
+            }
+            if (firstAid.isAlive()) {
+                firstAid.draw(g);
+            }
         }
     }
 
@@ -137,11 +165,10 @@ public class GameClient extends JComponent {
         frame.setIconImage(new ImageIcon("assets/images/icon.png").getImage());
         // frame.setLocationRelativeTo(null);
         final GameClient client = GameClient.getInstance();
-        client.repaint();
         frame.add(client);
         frame.pack();
         frame.setVisible(true);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        // frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         frame.addKeyListener(new KeyAdapter() {
             // pressed = move in the desired direction
@@ -158,6 +185,27 @@ public class GameClient extends JComponent {
             }
         });
 
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    client.save();
+                    System.exit(0);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(null, "Failed to save current game!",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
+                System.exit(4);
+            }
+        });
+
+        try {
+            client.load();
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Failed to load previous game!",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
         // Keep repainting
         while (true) {
             try {
@@ -172,6 +220,46 @@ public class GameClient extends JComponent {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void load() throws IOException {
+        File file = new File(GAME_SAVE);
+
+        if (file.exists() && file.isFile()) {
+            String json = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            Save save = JSON.parseObject(json, Save.class);
+            if (save.isGameContinued()) {
+                this.playerTank = new Tank(save.getPlayerTankPosition(), false);
+
+                this.enemyTanks.clear();
+                List<Save.Position> enemyPositions = save.getEnemyTankPosition();
+                if (enemyPositions != null && !enemyPositions.isEmpty()) {
+                    for (Save.Position position: enemyPositions) {
+                        this.enemyTanks.add(new Tank(position, true));
+                    }
+                }
+            }
+        }
+
+    }
+
+    public void save(String destination) throws IOException {
+        Save save = new Save(playerTank.isAlive(),
+                playerTank.getPosition(),
+                enemyTanks.stream()
+                        .filter(Tank::isAlive)
+                        .map(Tank::getPosition)
+                        .collect(Collectors.toList()));
+
+        /*try (PrintWriter out = new PrintWriter(
+                new BufferedWriter(
+                        new FileWriter(destination)))) {
+            out.println(JSON.toJSONString(save, true));*/
+        FileUtils.write(new File(destination), JSON.toJSONString(save, true), StandardCharsets.UTF_8);
+    }
+
+    public void save() throws IOException {
+        save(GAME_SAVE);
     }
 
     public void restart() {

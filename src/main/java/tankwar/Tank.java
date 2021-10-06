@@ -38,6 +38,10 @@ public class Tank {
         this.HP = enemy? ENEMY_HP : MY_HP;
     }
 
+    public Tank(Save.Position position, boolean enemy) {
+        this(position.getX(), position.getY(), position.getDirection(), enemy);
+    }
+
     public int getX() {
         return x;
     }
@@ -101,10 +105,17 @@ public class Tank {
     }
 
     private void stayInFrame() {
-        if (x < 0) x = 0;
-        else if (x + this.getImage().getWidth(null) > 800) x = 800 - this.getImage().getWidth(null);
-        if (y < 0) y = 0;
-        else if (y + this.getImage().getHeight(null)> 600) y = 600 - this.getImage().getHeight(null);
+        if (x < 0) {
+            x = 0;
+        } else if (x + this.getImage().getWidth(null) > GameClient.WIDTH) {
+            x = GameClient.WIDTH - this.getImage().getWidth(null);
+        }
+
+        if (y < 0) {
+            y = 0;
+        } else if (y + this.getImage().getHeight(null)> GameClient.HEIGHT) {
+            y = GameClient.HEIGHT - this.getImage().getHeight(null);
+        }
     }
 
     private boolean hitWall() {
@@ -123,6 +134,16 @@ public class Tank {
             if (enemyTank != this && rectangleTank.intersects(enemyTank.getRectangle())) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean hitFirstAid() {
+        Rectangle rectangleTank = this.getRectangle();
+        FirstAid firstAid = GameClient.getInstance().getFirstAid();
+        if (rectangleTank.intersects(firstAid.getRectangle())
+                && firstAid.isAlive()) {
+            return true;
         }
         return false;
     }
@@ -247,7 +268,28 @@ public class Tank {
 
         this.drawHPBar(g);
 
+        //this.drawCamel(g);
+
+        if (!enemy) {
+            if (this.hitFirstAid()) {
+                int recovery = (this.getHP() + FirstAid.RECOVERY >= MY_HP)?
+                        MY_HP : this.getHP() + FirstAid.RECOVERY;
+                this.setHP(recovery);
+                Tools.playSound("assets/audios/revive.wav");
+                GameClient.getInstance().getFirstAid().setAlive(false);
+            }
+        }
+
+
         g.drawImage(this.getImage(), this.x, this.y, null);
+    }
+
+    private void drawCamel(Graphics g) {
+        if (!enemy) {
+            Image camel = Tools.getImage("pet-camel.gif");
+            g.drawImage(camel, this.x - camel.getWidth(null) - 4,
+                    this.y, null);
+        }
     }
 
     private final Random random = new Random();
@@ -272,5 +314,13 @@ public class Tank {
         int oldHP = enemy? ENEMY_HP : MY_HP;
         int HPLeft = HP * this.getImage().getWidth(null) / oldHP;
         g.fillRect(this.x, this.y - 10, HPLeft, 10);
+    }
+
+    public boolean isDying() {
+        return this.getHP() <= MY_HP * 0.2;
+    }
+
+    public Save.Position getPosition() {
+        return new Save.Position(this.x, this.y, this.direction);
     }
 }
